@@ -1,0 +1,40 @@
+# Build output
+build/
+*.vcxproj
+*.vcxproj.*
+*.sln
+*.slnx
+
+# Compiled objects
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.exe
+*.dll
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# IDE
+.vs/
+.idea/
+*.suo
+*.user
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+
+# Local dev overrides (paths, secrets, preferences)
+*.local
+*.local.*

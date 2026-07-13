@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════╗
+  ║  TOIRE Level Meter — 临时 UI (Cline 制作)              ║
+  ║                                                        ║
+  ║  Gemini 可用 React 重写整个 <body>，保留                ║
+  ║  updateLevels(peakDb, rmsDb) 函数签名不变即可。         ║
+  ║                                                        ║
+  ║  以下可全部删除 / 替换:                                 ║
+  ║  ├─ 所有 <style> 和 CSS                                 ║
+  ║  ├─ <body> 内的 HTML 结构                              ║
+  ║  ├─ updateLevels() 的 body 实现（保留函数签名）         ║
+  ║  └─ 本注释块                                           ║
+  ║                                                        ║
+  ║  重编译后放入 Resources/webui/ 目录即可自动加载。       ║
+  ╚══════════════════════════════════════════════════════════╝
+-->
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TOIRE Level Meter</title>
+        <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #c0c0c0;
+  }
+  .header .sub {
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+  }
+  .meter-box {
+    width: 85%;
+    max-width: 380px;
+    background: #16213e;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .row {
+    margin-bottom: 12px;
+  }
+  .row:last-child { margin-bottom: 0; }
+  .label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .label-row .name {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+  .label-row .db {
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+  }
+  .bar-track {
+    width: 100%;
+    height: 10px;
+    background: #0f0f23;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 5px;
+    transition: width 60ms linear;
+  }
+  .peak-fill {
+    background: linear-gradient(90deg, #00c853 0%, #ffd600 60%, #ff1744 100%);
+  }
+  .rms-fill {
+    background: linear-gradient(90deg, #2979ff 0%, #00e5ff 100%);
+  }
+  .clip-indicator {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ff1744;
+    margin-top: 8px;
+    padding: 4px 0;
+    border-radius: 4px;
+    background: rgba(255,23,68,0.15);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .clip-indicator.on {
+    opacity: 1;
+  }
+  .footer {
+    margin-top: 20px;
+    font-size: 9px;
+    color: #444;
+    text-align: center;
+  }
+  .footer span {
+    color: #666;
+  }
+</style>
+    </head>
+    <body>
+
+        <div class="header">
+            <h1>TOIRE Level Meter</h1>
+            <div class="sub">临时 UI &middot; Cline 制作 &middot; Gemini 将用 React
+                替换</div>
+        </div>
+
+        <div class="meter-box">
+            <div class="row">
+                <div class="label-row">
+                    <span class="name" style="color:#ffd600;">PEAK</span>
+                    <span class="db" id="peak-db">-- dB</span>
+                </div>
+                <div class="bar-track">
+                    <div id="peak-bar" class="bar-fill peak-fill"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="label-row">
+                    <span class="name" style="color:#00e5ff;">RMS</span>
+                    <span class="db" id="rms-db">-- dB</span>
+                </div>
+                <div class="bar-track">
+                    <div id="rms-bar" class="bar-fill rms-fill"></div>
+                </div>
+            </div>
+            <div id="clip" class="clip-indicator">CLIP</div>
+        </div>
+
+        <div class="footer">
+            <span>Cline 临时 UI</span> &mdash; Gemini 用 React 重写整个 <body> 后替换此文件
+            </div>
+
+            <script>
+// ═══════════════════════════════════════════
+//  Cline 临时 JS 桥接 — Gemini 可全部替换
+//  只需保留 updateLevels(peakDb, rmsDb) 函数签名
+// ═══════════════════════════════════════════
+function updateLevels(peakDb, rmsDb) {
+  var peakEl  = document.getElementById('peak-db');
+  var rmsEl   = document.getElementById('rms-db');
+  var peakBar = document.getElementById('peak-bar');
+  var rmsBar  = document.getElementById('rms-bar');
+  var clipEl  = document.getElementById('clip');
+
+  peakEl.textContent = peakDb.toFixed(1) + ' dB';
+  rmsEl.textContent  = rmsDb.toFixed(1)  + ' dB';
+
+  // Linear mapping: -96 dB → 0%, 0 dB → 100%
+  var peakPct = Math.max(0, Math.min(100, (peakDb + 96) / 96 * 100));
+  var rmsPct  = Math.max(0, Math.min(100, (rmsDb  + 96) / 96 * 100));
+
+  peakBar.style.width = peakPct + '%';
+  rmsBar.style.width  = rmsPct  + '%';
+
+  clipEl.className = 'clip-indicator' + (peakDb >= -0.1 ? ' on' : '');
+}
+</script>
+
+        </body>
+    </html>
