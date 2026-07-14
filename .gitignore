@@ -38,3 +38,4 @@ $RECYCLE.BIN/
 # Local dev overrides (paths, secrets, preferences)
 *.local
 *.local.*
+WebUI/FOR_GEMINI.md
