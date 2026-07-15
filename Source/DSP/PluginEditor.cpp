@@ -2,7 +2,8 @@
 
 static float linToDb(float lin)
 {
-    if (lin <= 0.0f) return -96.0f;
+    // Clamp tiny values to silence to avoid floating-point drift in RMS ring buffer
+    if (lin < 1e-6f) return -96.0f;
     return 20.0f * std::log10(lin);
 }
 
@@ -31,17 +32,18 @@ TOIRELevelMeterAudioProcessorEditor::TOIRELevelMeterAudioProcessorEditor(
 {
     setSize(480, 360);
 
-    const auto winOpts = juce::WebBrowserComponent::Options::WinWebView2{}
-        .withUserDataFolder(juce::File::getSpecialLocation(juce::File::tempDirectory)
-                            .getChildFile("TOIRE_WebView2"))
-        .withStatusBarDisabled()
-        .withBuiltInErrorPageDisabled();
+    auto winOpts = juce::WebBrowserComponent::Options::WinWebView2{};
+    winOpts = winOpts.withUserDataFolder(juce::File::getSpecialLocation(
+        juce::File::tempDirectory).getChildFile("TOIRE_WebView2"));
+    winOpts = winOpts.withStatusBarDisabled();
+    winOpts = winOpts.withBuiltInErrorPageDisabled();
+    winOpts = winOpts.withBackgroundColour(juce::Colour(0xff1a1a2e));
 
-    const auto opts = juce::WebBrowserComponent::Options{}
-        .withBackend(juce::WebBrowserComponent::Options::Backend::webview2)
-        .withWinWebView2Options(winOpts)
-        .withNativeIntegrationEnabled()
-        .withKeepPageLoadedWhenBrowserIsHidden();
+    auto opts = juce::WebBrowserComponent::Options{};
+    opts = opts.withBackend(juce::WebBrowserComponent::Options::Backend::webview2);
+    opts = opts.withWinWebView2Options(winOpts);
+    opts = opts.withNativeIntegrationEnabled();
+    opts = opts.withKeepPageLoadedWhenBrowserIsHidden();
 
     webView = std::make_unique<juce::WebBrowserComponent>(opts);
     webView->setBounds(0, 0, 480, 360);
@@ -50,17 +52,11 @@ TOIRELevelMeterAudioProcessorEditor::TOIRELevelMeterAudioProcessorEditor(
     webView->setVisible(true);
     webView->toFront(true);
 
-    // Load from file — the index.html already has addEventListener for levelData
     auto index = findWebui();
     if (index.existsAsFile())
-    {
-        auto url = "file:///" + index.getFullPathName().replace("\\", "/");
-        webView->goToURL(url);
-    }
+        webView->goToURL("file:///" + index.getFullPathName().replace("\\", "/"));
     else
-    {
         webView->goToURL("about:blank");
-    }
 
     startTimerHz(30);
 }
@@ -83,10 +79,25 @@ void TOIRELevelMeterAudioProcessorEditor::resized()
 void TOIRELevelMeterAudioProcessorEditor::timerCallback()
 {
     if (!webView) return;
+
     auto& meter = audioProcessor.getMeterData();
-    displayPeakDb = linToDb(meter.getPeakHold());
-    displayRmsDb  = linToDb(meter.getRms());
-    juce::var payload = juce::var(juce::Array<juce::var>(
-        { juce::var(displayPeakDb), juce::var(displayRmsDb) }));
+    displayPeakDb     = linToDb(meter.getPeak());
+    displayPeakHoldDb = linToDb(meter.getPeakHold());
+    displayRmsDb      = linToDb(meter.getRms());
+    displayRmsHoldDb  = linToDb(meter.getRmsHold());
+
+    // When DAW stops, processBlock isn't called. If peak is silent,
+    // force RMS values to -96 to prevent stale readings.
+    if (displayPeakDb < -90.0f)
+    {
+        displayRmsDb     = -96.0f;
+        displayRmsHoldDb = -96.0f;
+    }
+    juce::var payload = juce::var(juce::Array<juce::var>({
+        juce::var(displayPeakDb),
+        juce::var(displayPeakHoldDb),
+        juce::var(displayRmsDb),
+        juce::var(displayRmsHoldDb)
+    }));
     webView->emitEventIfBrowserIsVisible("levelData", payload);
 }

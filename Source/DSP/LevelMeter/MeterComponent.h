@@ -11,6 +11,7 @@
 //   - RMS over a configurable window (default 300 ms)
 //   - Peak over the current block
 //   - Peak hold with linear decay (default 2 s hold time)
+//   - RMS hold with linear decay (default 2 s hold time)
 
 struct LevelMeterData
 {
@@ -24,6 +25,11 @@ struct LevelMeterData
     void clearPeakHold();
     void updatePeakHold(float blockPeak, int numSamples);
 
+    // --- RMS hold (same logic as peak hold) ---
+    void prepareRmsHold(double sampleRate, float holdMs = 2000.0f);
+    void clearRmsHold();
+    void updateRmsHold(float rmsVal, int numSamples);
+
     // Store raw block peak (non-smoothed) for the editor
     void setLatestPeak(float val) { latestPeak.store(val); }
 
@@ -31,6 +37,7 @@ struct LevelMeterData
     float getPeak()     const { return latestPeak.load(); }
     float getRms()      const { return latestRms.load(); }
     float getPeakHold() const { return peakHold.load(); }
+    float getRmsHold()  const { return rmsHold.load(); }
 
 private:
     // RMS ring buffer (one per channel, stores squared samples)
@@ -40,14 +47,19 @@ private:
         int writePos = 0;
         float runningSum = 0.0f;
         int windowSize = 0;
-        int samplesWritten = 0;  // tracks fill state for initial ramp-up
+        int samplesWritten = 0;
     };
     std::vector<RmsChannel> rmsChans;
 
-    // Peak hold: sample-based counter
+    // Peak hold
     std::atomic<float> peakHold { 0.0f };
-    int holdCounter = 0;   // accumulated sample count since last peak
-    int holdSamples = 0;   // sample count for hold time (2s @ sampleRate)
+    int holdCounter = 0;
+    int holdSamples = 0;
+
+    // RMS hold (mirrors peak hold logic)
+    std::atomic<float> rmsHold { 0.0f };
+    int rmsHoldCounter = 0;
+    int rmsHoldSamples = 0;
 
     // Latest computed values
     std::atomic<float> latestPeak { 0.0f };

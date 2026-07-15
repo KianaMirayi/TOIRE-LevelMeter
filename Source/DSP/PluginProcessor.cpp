@@ -30,12 +30,14 @@ void TOIRELevelMeterAudioProcessor::prepareToPlay(double sampleRate, int samples
 
     meterData.prepareRms(sampleRate, getTotalNumInputChannels(), 300.0f);
     meterData.preparePeakHold(sampleRate, 2000.0f);
+    meterData.prepareRmsHold(sampleRate, 2000.0f);
 }
 
 void TOIRELevelMeterAudioProcessor::releaseResources()
 {
     meterData.clearRms();
     meterData.clearPeakHold();
+    meterData.clearRmsHold();
 }
 
 void TOIRELevelMeterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
@@ -68,6 +70,9 @@ void TOIRELevelMeterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
 
     // Peak hold decay (pass block sample count for accurate hold timing)
     meterData.updatePeakHold(blockPeak, numSamples);
+
+    // RMS hold — track highest RMS value (similar to peak hold)
+    meterData.updateRmsHold(meterData.getRms(), numSamples);
 
     // Levels read directly by PluginEditor timerCallback() via meterData.getPeakHold()/getRms()
     // No push needed — Timer polls std::atomic, no audio-thread work wasted

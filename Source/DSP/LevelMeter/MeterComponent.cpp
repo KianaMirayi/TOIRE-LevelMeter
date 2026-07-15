@@ -128,3 +128,46 @@ void LevelMeterData::updatePeakHold(float blockPeak, int numSamples)
         }
     }
 }
+// ====== RMS Hold (mirrors peak hold) ======
+void LevelMeterData::prepareRmsHold(double sampleRate, float holdMs)
+{
+    rmsHoldSamples = static_cast<int>(sampleRate * holdMs / 1000.0);
+    rmsHoldCounter = 0;
+    rmsHold.store(0.0f);
+}
+
+void LevelMeterData::clearRmsHold()
+{
+    rmsHoldCounter = 0;
+    rmsHold.store(0.0f);
+}
+
+void LevelMeterData::updateRmsHold(float rmsVal, int numSamples)
+{
+    const float currentHold = rmsHold.load();
+
+    if (rmsVal >= currentHold)
+    {
+        rmsHold.store(rmsVal);
+        rmsHoldCounter = 0;
+    }
+    else
+    {
+        rmsHoldCounter += numSamples;
+
+        if (rmsHoldCounter >= rmsHoldSamples && rmsHoldSamples > 0)
+        {
+            const int decayElapsed = rmsHoldCounter - rmsHoldSamples;
+            if (decayElapsed >= rmsHoldSamples)
+            {
+                rmsHold.store(0.0f);
+            }
+            else
+            {
+                const float frac = static_cast<float>(decayElapsed) / static_cast<float>(rmsHoldSamples);
+                const float decayed = currentHold * (1.0f - frac);
+                rmsHold.store(std::max(0.0f, decayed));
+            }
+        }
+    }
+}

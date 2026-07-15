@@ -1,172 +1,636 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOIRE Level Meter</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #1a1a2e;
-  color: #e0e0e0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.header {
-  text-align: center;
-  margin-bottom: 24px;
-}
-.header h1 {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  color: #c0c0c0;
-}
-.meter-box {
-  width: 85%;
-  max-width: 380px;
-  background: #16213e;
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-}
-.row {
-  margin-bottom: 16px;
-}
-.label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 12px;
-  margin-bottom: 6px;
-}
-.label-row .name {
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: 700;
-}
-.label-row .db {
-  font-weight: 700;
-  font-size: 14px;
-  color: #fff;
-}
-.bar-track {
-  width: 100%;
-  height: 12px;
-  background: #0f0f23;
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-}
-.bar-fill {
-  height: 100%;
-  width: 0%;
-  border-radius: 6px;
-  transition: width 30ms linear;
-}
-.peak-fill {
-  background: linear-gradient(90deg, #00c853 0%, #ffd600 60%, #ff1744 100%);
-}
-.rms-fill {
-  background: linear-gradient(90deg, #2979ff 0%, #00e5ff 100%);
-}
-.clip-indicator {
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #ff1744;
-  margin-top: 12px;
-  padding: 6px 0;
-  border-radius: 4px;
-  background: rgba(255, 23, 68, 0.15);
-  opacity: 0;
-  transition: opacity 0.15s ease-out;
-}
-.clip-indicator.on {
-  opacity: 1;
-}
-</style>
-</head>
-<body>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOIRE Level Meter</title>
+    <style>
+    /* 全局约束 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d0e11;
+      color: #e0e0e0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* 拟物化主面板 */
+    .plugin-panel {
+      width: 92%;
+      max-width: 500px;
+      background: 
+        /* 金属划痕模拟 (加粗约 2px，分布到界面边缘) */
+        linear-gradient(15deg, transparent calc(50% - 1px), rgba(255,255,255,0.03) calc(50% - 0.5px), rgba(255,255,255,0.03) calc(50% + 1.5px), transparent calc(50% + 2px)) 2% 15% / 120px 120px no-repeat,
+        linear-gradient(-35deg, transparent calc(50% - 1px), rgba(0,0,0,0.08) calc(50% - 0.5px), rgba(0,0,0,0.08) calc(50% + 1.5px), transparent calc(50% + 2px)) 95% 8% / 80px 80px no-repeat,
+        linear-gradient(65deg, transparent calc(50% - 1px), rgba(255,255,255,0.02) calc(50% - 0.5px), rgba(255,255,255,0.02) calc(50% + 1.5px), transparent calc(50% + 2px)) 15% 92% / 150px 150px no-repeat,
+        linear-gradient(-15deg, transparent calc(50% - 1px), rgba(0,0,0,0.06) calc(50% - 0.5px), rgba(0,0,0,0.06) calc(50% + 1.5px), transparent calc(50% + 2px)) 85% 95% / 90px 90px no-repeat,
+        linear-gradient(45deg, transparent calc(50% - 1px), rgba(255,255,255,0.03) calc(50% - 0.5px), rgba(255,255,255,0.03) calc(50% + 1.5px), transparent calc(50% + 2px)) 50% 5% / 200px 200px no-repeat,
+        linear-gradient(-60deg, transparent calc(50% - 1px), rgba(0,0,0,0.07) calc(50% - 0.5px), rgba(0,0,0,0.07) calc(50% + 1.5px), transparent calc(50% + 2px)) 98% 50% / 70px 70px no-repeat,
+        linear-gradient(80deg, transparent calc(50% - 1px), rgba(255,255,255,0.02) calc(50% - 0.5px), rgba(255,255,255,0.02) calc(50% + 1.5px), transparent calc(50% + 2px)) 5% 60% / 140px 140px no-repeat,
+        linear-gradient(-25deg, transparent calc(50% - 1px), rgba(0,0,0,0.05) calc(50% - 0.5px), rgba(0,0,0,0.05) calc(50% + 1.5px), transparent calc(50% + 2px)) 30% 2% / 110px 110px no-repeat,
+        linear-gradient(10deg, transparent calc(50% - 1px), rgba(255,255,255,0.03) calc(50% - 0.5px), rgba(255,255,255,0.03) calc(50% + 1.5px), transparent calc(50% + 2px)) 60% 98% / 160px 160px no-repeat,
+        linear-gradient(-5deg, transparent calc(50% - 1px), rgba(0,0,0,0.06) calc(50% - 0.5px), rgba(0,0,0,0.06) calc(50% + 1.5px), transparent calc(50% + 2px)) 8% 85% / 130px 130px no-repeat,
+        linear-gradient(55deg, transparent calc(50% - 1px), rgba(255,255,255,0.02) calc(50% - 0.5px), rgba(255,255,255,0.02) calc(50% + 1.5px), transparent calc(50% + 2px)) 95% 30% / 170px 170px no-repeat,
+        linear-gradient(-80deg, transparent calc(50% - 1px), rgba(0,0,0,0.08) calc(50% - 0.5px), rgba(0,0,0,0.08) calc(50% + 1.5px), transparent calc(50% + 2px)) 2% 40% / 60px 60px no-repeat,
+        linear-gradient(35deg, transparent calc(50% - 1px), rgba(255,255,255,0.03) calc(50% - 0.5px), rgba(255,255,255,0.03) calc(50% + 1.5px), transparent calc(50% + 2px)) 98% 2% / 190px 190px no-repeat,
+        linear-gradient(-45deg, transparent calc(50% - 1px), rgba(0,0,0,0.05) calc(50% - 0.5px), rgba(0,0,0,0.05) calc(50% + 1.5px), transparent calc(50% + 2px)) 98% 88% / 100px 100px no-repeat,
+        /* 漆面刮擦/抹开的污渍感 (不规则、边缘平滑过渡) */
+        radial-gradient(ellipse at 75% 20%, rgba(0,0,0,0.08) 0%, transparent 40%) 0 0 / 180px 120px no-repeat,
+        radial-gradient(circle at 82% 28%, rgba(255,255,255,0.04) 0%, transparent 50%) 0 0 / 140px 140px no-repeat,
+        radial-gradient(ellipse at 85% 22%, rgba(0,0,0,0.1) 0%, transparent 45%) 0 0 / 150px 90px no-repeat,
+        radial-gradient(circle at 78% 25%, rgba(0,0,0,0.06) 0%, transparent 60%) 0 0 / 220px 180px no-repeat,
+        /* 漆面刮擦/抹开的污渍感 (右下角) */
+        radial-gradient(ellipse at 88% 85%, rgba(0,0,0,0.09) 0%, transparent 45%) 0 0 / 160px 140px no-repeat,
+        radial-gradient(circle at 92% 78%, rgba(255,255,255,0.03) 0%, transparent 55%) 0 0 / 150px 150px no-repeat,
+        radial-gradient(ellipse at 82% 90%, rgba(0,0,0,0.07) 0%, transparent 50%) 0 0 / 200px 110px no-repeat,
+        /* 水平横向拉丝质感 (极其微弱，避免塑料感) */
+        repeating-linear-gradient(90deg, 
+          rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 1px, 
+          transparent 1px, transparent 5px, 
+          rgba(0, 0, 0, 0.01) 5px, rgba(0, 0, 0, 0.01) 6px, 
+          transparent 6px, transparent 12px
+        ),
+        /* 光影基础层 */
+        linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 2%, rgba(0,0,0,0) 98%, rgba(0,0,0,0.6) 100%),
+        radial-gradient(140% 120% at 50% 0%, #34373e 0%, #1f2127 40%, #15161b 100%);
+      border-radius: 24px;
+      padding: 40px 36px;
+      box-shadow: 
+        0 40px 80px rgba(0,0,0,0.95),
+        0 15px 30px rgba(0,0,0,0.7),
+        inset 0 2px 3px rgba(255,255,255,0.15),
+        inset 0 -2px 6px rgba(0,0,0,0.8),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+      border: 1px solid #060708;
+      position: relative;
+    }
+    
+    /* 顶部 Logo */
+    .plugin-logo {
+      text-align: center;
+      font-family: "Lucida Calligraphy", "Monotype Corsiva", "Apple Chancery", "Snell Roundhand", "Georgia", cursive, serif;
+      font-style: italic;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 4px;
+      margin-bottom: 40px;
+      
+      /* 淡色系丰富渐变 */
+      background: linear-gradient(90deg, #ffd1ff 0%, #fae0c1 33%, #c2e9fb 66%, #d4ffea 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      
+      /* 周围深色阴影凸显对比度 */
+      filter: 
+        drop-shadow(0 2px 4px rgba(0,0,0,1)) 
+        drop-shadow(0 0 10px rgba(0,0,0,0.8));
+    }
+    
+    .meter-container {
+      margin-bottom: 0px;
+    }
 
-<div class="header">
-  <h1>TOIRE Level Meter</h1>
-</div>
+    .meter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      padding: 0 6px;
+    }
+    
+    /* 左侧标签 */
+    .row-label {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-style: italic;
+      text-transform: uppercase;
+      
+      /* 偏灰色金属质感渐变 */
+      background: linear-gradient(180deg, #f3f4f6 0%, #9ca3af 45%, #6b7280 50%, #9ca3af 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      
+      /* 强阴影凸显质感 */
+      filter: 
+        drop-shadow(0 1px 1px rgba(0,0,0,0.8))
+        drop-shadow(0 2px 4px rgba(0,0,0,1))
+        drop-shadow(0 0 2px rgba(255,255,255,0.1));
+    }
+    
+    /* 右侧读数 */
+    .row-value {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #d0d4e0;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+      text-shadow: 0 2px 4px rgba(0,0,0,1);
+    }
+    
+    .max-text {
+      font-size: 9px;
+      font-weight: 600;
+      color: #9ca3af;
+      margin-right: 4px;
+      font-family: system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.5px;
+      text-shadow: none;
+    }
+    
+    .max-value {
+      color: #9ca3af;
+      margin-right: 2px;
+    }
 
-<div class="meter-box">
-  <div class="row">
-    <div class="label-row">
-      <span class="name" style="color: #ffd600;">PEAK</span>
-      <span class="db" id="peak-db">-96.0 dB</span>
+    .row-value .unit {
+      font-size: 9px;
+      color: #8b8e98;
+      margin-left: 2px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    
+    /* 仪表轨道 (深槽阴影) */
+    .meter-track {
+      container-type: inline-size;
+      height: 40px;
+      background: #030405;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 2px 3px rgba(255,255,255,0.15),
+        0 -1px 3px rgba(0,0,0,0.9);
+      border: 1px solid #000;
+      border-bottom: 1px solid #36383d;
+      transition: box-shadow 0.1s ease-out;
+    }
+    
+    .meter-track.clip-bloom {
+      box-shadow: 
+        0 2px 3px rgba(255,255,255,0.15),
+        0 -1px 3px rgba(0,0,0,0.9),
+        0 0 20px rgba(255, 23, 68, 0.6),
+        0 0 40px rgba(255, 23, 68, 0.4);
+    }
+
+    /* 物理凹陷内阴影遮罩 (盖在柱子上方增加真实感) */
+    .meter-track::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      box-shadow: 
+        inset 0 10px 16px rgba(0,0,0,0.95),
+        inset 0 3px 6px rgba(0,0,0,0.9),
+        inset 0 -2px 5px rgba(255,255,255,0.08);
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    /* 轨道内巨大背景字 */
+    .track-bg-text {
+      position: absolute;
+      right: 24px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 42px;
+      line-height: 1;
+      font-weight: 900;
+      font-family: 'Arial Black', Impact, system-ui, sans-serif;
+      color: #0b0c0f;
+      letter-spacing: 4px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .track-bg-peak {
+      color: #0d0f12;
+      text-shadow: 
+        0 0 4px rgba(0, 200, 83, 0.4),
+        0 0 10px rgba(0, 200, 83, 0.15),
+        1px 1px 0px rgba(255, 255, 255, 0.05),
+        -1px -1px 2px rgba(0, 0, 0, 0.9);
+    }
+
+    .track-bg-rms {
+      color: #0d0f12;
+      text-shadow: 
+        0 0 4px rgba(41, 121, 255, 0.4),
+        0 0 10px rgba(41, 121, 255, 0.15),
+        1px 1px 0px rgba(255, 255, 255, 0.05),
+        -1px -1px 2px rgba(0, 0, 0, 0.9);
+    }
+    
+    /* 共享中心刻度 */
+    .shared-ticks {
+      position: relative;
+      height: 24px;
+      margin: 8px 12px;
+      border-left: 1px solid rgba(255,255,255,0.1);
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .tick-mark {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(255,255,255,0.15);
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tick-mark span {
+      font-size: 10px;
+      color: #7b808c;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+      margin-top: 1px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      background: rgba(13, 14, 17, 0.6);
+      padding: 0 4px;
+      border-radius: 4px;
+      z-index: 2;
+    }
+    
+    /* 渐变填充层 (使用 clip-path 动画) */
+    .bar-gradient {
+      position: absolute;
+      left: 12px; right: 12px; top: 10px; bottom: 10px;
+      border-radius: 4px;
+      --clip-right: 100%;
+      clip-path: inset(-10px var(--clip-right) -10px -10px); /* 初始隐藏 */
+      transition: clip-path 30ms linear;
+      z-index: 2;
+    }
+    
+    /* 峰值保留滑块 */
+    .peak-hold-marker {
+      position: absolute;
+      left: 12px; top: 10px; bottom: 10px; width: 2px;
+      background: #fff;
+      box-shadow: 0 0 4px #fff, 0 0 8px rgba(255, 255, 255, 0.8);
+      z-index: 4;
+      border-radius: 1px;
+      opacity: 0;
+      pointer-events: none;
+      --hold-pos: 0;
+      transform: translateX(calc((100cqw - 24px - 2px) * var(--hold-pos)));
+    }
+    
+    /* 玻璃反光与扫描线 */
+    .glass-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      pointer-events: none;
+      z-index: 12;
+      background: 
+        /* Scanlines */
+        repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0px, rgba(0,0,0,0.3) 1px, transparent 1px, transparent 4px),
+        /* Glare */
+        linear-gradient(110deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.02) 20%, transparent 40%, transparent 100%);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.08);
+    }
+    
+    .gradient-theme {
+      background: linear-gradient(90deg, 
+        #00e5ff 0%, #00b0ff 65%, 
+        #ffd600 75%, #ffab00 85%, 
+        #ff1744 92%, #d50000 100%
+      );
+      box-shadow: inset 0 2px 2px rgba(255,255,255,0.3), inset 0 -2px 2px rgba(0,0,0,0.2);
+      filter: drop-shadow(0 0 6px rgba(0, 176, 255, 0.3));
+    }
+    
+    /* 顶层覆盖网格，切割渐变层形成发光块 */
+    .ticks-overlay {
+      position: absolute;
+      left: 12px; right: 12px; top: 10px; bottom: 10px;
+      background: repeating-linear-gradient(90deg, transparent 0px, transparent 4px, #090a0d 4px, #090a0d 6px);
+      z-index: 3;
+      pointer-events: none;
+    }
+    
+    /* 底部按钮行 */
+    .footer-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    /* 拟物化指示器灯 (CLIP) */
+    .clip-btn {
+      background: linear-gradient(180deg, #25272e 0%, #1a1c21 100%);
+      border-radius: 12px;
+      padding: 6px 24px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #5a5d66;
+      box-shadow: 
+        inset 0 1px 1px rgba(255,255,255,0.08),
+        0 2px 4px rgba(0,0,0,0.4),
+        0 4px 8px rgba(0,0,0,0.2);
+      border: 1px solid #090a0c;
+      transition: all 0.15s ease-out;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+    }
+    
+    .clip-btn.on {
+      color: #ff1744;
+      background: linear-gradient(180deg, #2d1318 0%, #1c090c 100%);
+      box-shadow: 
+        inset 0 1px 1px rgba(255,255,255,0.1),
+        0 0 12px rgba(255, 23, 68, 0.5),
+        0 2px 4px rgba(0,0,0,0.6);
+      border-color: #ff1744;
+      text-shadow: 0 0 4px rgba(255, 23, 68, 0.8);
+    }
+  </style>
+  </head>
+  <body>
+
+    <div class="plugin-panel">
+      <div class="plugin-logo">TOIRE Level Meter</div>
+
+      <!-- PEAK 表 -->
+      <div class="meter-container">
+        <div class="meter-header" style="align-items: flex-end;">
+          <div class="row-label">PEAK</div>
+          <div class="row-value"
+            style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <div><span id="peak-val">-96.0</span><span
+                class="unit">dB</span></div>
+            <div style="line-height: 1;"><span class="max-text">MAX</span><span
+                id="max-val" class="max-value">-96.00</span><span class="unit"
+                style="color: #9ca3af;">dB</span></div>
+          </div>
+        </div>
+        <div class="meter-track" id="meter-track-peak">
+          <div class="track-bg-text track-bg-peak">PEAK</div>
+          <div class="bar-gradient gradient-theme" id="peak-bar"></div>
+          <div class="peak-hold-marker" id="peak-hold"></div>
+          <div class="ticks-overlay"></div>
+          <div class="glass-overlay"></div>
+        </div>
+      </div>
+
+      <!-- 共享刻度 -->
+      <div class="shared-ticks">
+        <div class="tick-mark" style="left: 0%;"><span>-96</span></div>
+        <div class="tick-mark" style="left: 10%;"><span>-60</span></div>
+        <div class="tick-mark" style="left: 30%;"><span>-24</span></div>
+        <div class="tick-mark" style="left: 45%;"><span>-15</span></div>
+        <div class="tick-mark" style="left: 60%;"><span>-10</span></div>
+        <div class="tick-mark" style="left: 75%;"><span>-6</span></div>
+        <div class="tick-mark" style="left: 88%;"><span>-3</span></div>
+        <div class="tick-mark" style="left: 100%;"><span>0</span></div>
+      </div>
+
+      <!-- RMS 表 -->
+      <div class="meter-container" style="margin-top: 0px;">
+        <div class="meter-header" style="align-items: flex-end;">
+          <div class="row-label">RMS</div>
+          <div class="row-value"
+            style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+            <div><span id="rms-val">-96.0</span><span
+                class="unit">dB</span></div>
+            <div style="line-height: 1;"><span class="max-text">MAX</span><span
+                id="rms-max-val" class="max-value">-96.00</span><span
+                class="unit" style="color: #9ca3af;">dB</span></div>
+          </div>
+        </div>
+        <div class="meter-track" id="meter-track-rms">
+          <div class="track-bg-text track-bg-rms">RMS</div>
+          <div class="bar-gradient gradient-theme" id="rms-bar"></div>
+          <div class="peak-hold-marker" id="rms-hold"></div>
+          <div class="ticks-overlay"></div>
+          <div class="glass-overlay"></div>
+        </div>
+      </div>
+
+      <!-- CLIP 灯 -->
+      <div class="footer-row">
+        <div class="clip-btn" id="clip-indicator">CLIP</div>
+      </div>
     </div>
-    <div class="bar-track">
-      <div id="peak-bar" class="bar-fill peak-fill"></div>
-    </div>
-  </div>
 
-  <div class="row">
-    <div class="label-row">
-      <span class="name" style="color: #00e5ff;">RMS</span>
-      <span class="db" id="rms-db">-96.0 dB</span>
-    </div>
-    <div class="bar-track">
-      <div id="rms-bar" class="bar-fill rms-fill"></div>
-    </div>
-  </div>
+    <script>
+    // 缓存 DOM 节点提升性能
+    const peakBar = document.getElementById('peak-bar');
+    const rmsBar = document.getElementById('rms-bar');
+    const peakVal = document.getElementById('peak-val');
+    const rmsVal = document.getElementById('rms-val');
+    const clipIndicator = document.getElementById('clip-indicator');
+    
+    // 轨道外壳 (用于 Bloom/Glow 溢光效应)
+    const meterTrackPeak = document.getElementById('meter-track-peak');
+    const meterTrackRms = document.getElementById('meter-track-rms');
+    
+    // 峰值保留逻辑状态
+    const peakHold = document.getElementById('peak-hold');
+    const rmsHold = document.getElementById('rms-hold');
+    const holdState = {
+      peak: { val: 0, time: 0 },
+      rms: { val: 0, time: 0 }
+    };
+    const HOLD_DELAY = 600; // 停留时间 (ms)
+    const FALL_SPEED = 0.08; // 掉落速度 (%/ms)
+    let lastTime = performance.now();
+    let peakHoldActive = false;
+    let rmsHoldActive = false;
 
-  <div id="clip-indicator" class="clip-indicator">CLIP</div>
-</div>
+    function updateHoldMarkers() {
+      const now = performance.now();
+      const dt = now - lastTime;
+      lastTime = now;
 
-<script>
-var peakDbEl   = document.getElementById('peak-db');
-var rmsDbEl    = document.getElementById('rms-db');
-var peakBarEl  = document.getElementById('peak-bar');
-var rmsBarEl   = document.getElementById('rms-bar');
-var clipEl     = document.getElementById('clip-indicator');
+      // Peak
+      if (now - holdState.peak.time > HOLD_DELAY) {
+        holdState.peak.val -= FALL_SPEED * dt;
+        if (holdState.peak.val < 0) holdState.peak.val = 0;
+      }
+      if (holdState.peak.val > 0) {
+        if (!peakHoldActive) {
+          peakHold.style.opacity = 1;
+          peakHoldActive = true;
+        }
+        peakHold.style.setProperty('--hold-pos', holdState.peak.val * 0.01);
+      } else if (peakHoldActive) {
+        peakHold.style.opacity = 0;
+        peakHoldActive = false;
+      }
 
-// Called by C++ via emitEventIfBrowserIsVisible("levelData", [peakDb, rmsDb])
-// This is the JUCE 8 recommended C++ → JS pattern — no evaluateJavascript needed.
-function updateLevels(peakDb, rmsDb) {
-  peakDbEl.textContent = peakDb.toFixed(1) + ' dB';
-  rmsDbEl.textContent  = rmsDb.toFixed(1)  + ' dB';
+      // RMS
+      if (now - holdState.rms.time > HOLD_DELAY) {
+        holdState.rms.val -= FALL_SPEED * dt;
+        if (holdState.rms.val < 0) holdState.rms.val = 0;
+      }
+      if (holdState.rms.val > 0) {
+        if (!rmsHoldActive) {
+          rmsHold.style.opacity = 1;
+          rmsHoldActive = true;
+        }
+        rmsHold.style.setProperty('--hold-pos', holdState.rms.val * 0.01);
+      } else if (rmsHoldActive) {
+        rmsHold.style.opacity = 0;
+        rmsHoldActive = false;
+      }
 
-  var peakPct = Math.max(0, Math.min(100, ((peakDb + 96) / 96) * 100));
-  var rmsPct  = Math.max(0, Math.min(100, ((rmsDb  + 96) / 96) * 100));
-  peakBarEl.style.width = peakPct + '%';
-  rmsBarEl.style.width  = rmsPct  + '%';
+      requestAnimationFrame(updateHoldMarkers);
+    }
+    requestAnimationFrame(updateHoldMarkers);
 
-  if (peakDb >= -0.1) {
-    clipEl.classList.add('on');
-  } else {
-    clipEl.classList.remove('on');
-  }
-}
+    /**
+     * 对数刻度映射 (-96dB -> 0%, 0dB -> 100%)
+     * 保证 -15dB 以上占据绝大部份宽度
+     */
+    const dbMapDb = new Float32Array([-96, -60, -24, -15, -10, -6, -3, 0]);
+    const dbMapPct = new Float32Array([0, 10, 30, 45, 60, 75, 88, 100]);
 
-// Register the JUCE event listener — C++ emits "levelData", we receive it.
-// The payload is an array: [peakDb, rmsDb]
-if (typeof __JUCE__ !== 'undefined' && __JUCE__.backend) {
-  __JUCE__.backend.addEventListener('levelData', function(data) {
-    // data is the var::Array from C++ emitEventIfBrowserIsVisible
-    updateLevels(data[0], data[1]);
-  });
-} else {
-  // Fallback: if running in a plain browser (development), poll a dummy
-  console.log('__JUCE__ not found — running in browser dev mode');
-  var dummyVal = -96;
-  setInterval(function() {
-    dummyVal = Math.min(0, dummyVal + 0.5);
-    if (dummyVal >= 0) dummyVal = -96;
-    updateLevels(dummyVal, dummyVal - 6);
-  }, 100);
-}
-</script>
+    function dbToPercent(db) {
+      if (db <= -96) return 0;
+      if (db >= 0) return 100;
+      
+      for (let i = 0; i < 7; i++) {
+        const d1 = dbMapDb[i];
+        const d2 = dbMapDb[i+1];
+        if (db >= d1 && db <= d2) {
+          return dbMapPct[i] + (db - d1) / (d2 - d1) * (dbMapPct[i+1] - dbMapPct[i]);
+        }
+      }
+      return 0;
+    }
 
-</body>
+    // 缓存DOM状态
+    let lastPeakStr = "";
+    let lastMaxStr = "";
+    let lastRmsStr = "";
+    let lastRmsMaxStr = "";
+    let clipIndicatorOn = false;
+    let peakClipBloomOn = false;
+    let rmsClipBloomOn = false;
+
+    /**
+     * C++ WebBridge 接口函数
+     * @param {number} peakDb -96.0 到 0.0
+     * @param {number} peakHoldDb -96.0 到 0.0
+     * @param {number} rmsDb -96.0 到 0.0
+     * @param {number} rmsHoldDb -96.0 到 0.0
+     */
+    function updateLevels(peakDb, peakHoldDb, rmsDb, rmsHoldDb) {
+      // 1. 更新数值文本 (缓存判断)
+      const peakStr = peakDb.toFixed(1);
+      if (peakStr !== lastPeakStr) {
+        peakVal.textContent = peakStr;
+        lastPeakStr = peakStr;
+      }
+      const maxStr = peakHoldDb.toFixed(2);
+      if (maxStr !== lastMaxStr) {
+        document.getElementById('max-val').textContent = maxStr;
+        lastMaxStr = maxStr;
+      }
+      const rmsStr = rmsDb.toFixed(1);
+      if (rmsStr !== lastRmsStr) {
+        rmsVal.textContent = rmsStr;
+        lastRmsStr = rmsStr;
+      }
+      const rmsMaxStr = rmsHoldDb.toFixed(2);
+      if (rmsMaxStr !== lastRmsMaxStr) {
+        document.getElementById('rms-max-val').textContent = rmsMaxStr;
+        lastRmsMaxStr = rmsMaxStr;
+      }
+
+      // 2. 计算百分比 (-96 = 0%, 0 = 100%, 对数映射)
+      const peakPct = dbToPercent(peakDb);
+      const rmsPct = dbToPercent(rmsDb);
+
+      // 3. 使用 CSS 变量更新 clip-path
+      peakBar.style.setProperty('--clip-right', (100 - peakPct) + '%');
+      rmsBar.style.setProperty('--clip-right', (100 - rmsPct) + '%');
+
+      // 更新峰值保留
+      if (peakPct >= holdState.peak.val) {
+        holdState.peak.val = peakPct;
+        holdState.peak.time = performance.now();
+      }
+      if (rmsPct >= holdState.rms.val) {
+        holdState.rms.val = rmsPct;
+        holdState.rms.time = performance.now();
+      }
+
+      // 4. 削波指示及溢光
+      const isPeakClip = peakDb >= -0.1;
+      const isRmsClip = rmsDb >= -0.1;
+      
+      if (isPeakClip !== clipIndicatorOn) {
+        if (isPeakClip) clipIndicator.classList.add('on');
+        else clipIndicator.classList.remove('on');
+        clipIndicatorOn = isPeakClip;
+      }
+      
+      if (isPeakClip !== peakClipBloomOn) {
+        if (isPeakClip) meterTrackPeak.classList.add('clip-bloom');
+        else meterTrackPeak.classList.remove('clip-bloom');
+        peakClipBloomOn = isPeakClip;
+      }
+      
+      if (isRmsClip !== rmsClipBloomOn) {
+        if (isRmsClip) meterTrackRms.classList.add('clip-bloom');
+        else meterTrackRms.classList.remove('clip-bloom');
+        rmsClipBloomOn = isRmsClip;
+      }
+    }
+
+    // 暴露到 window (兼容旧版)
+    window.updateLevels = updateLevels;
+
+    // 5. 绑定 JUCE C++ 插件事件
+    if (typeof __JUCE__ !== 'undefined' && __JUCE__.backend) {
+      __JUCE__.backend.addEventListener('levelData', function(data) {
+        updateLevels(data[0], data[1], data[2], data[3]);
+      });
+    }
+
+    // =========================================================================
+    // ⚠️ 生产环境集成注意 (C++ 端接入时请删除/注释以下代码) ⚠️
+    // =========================================================================
+    // 下方的 setInterval 是为了在浏览器/AI Studio沙箱中演示 UI 效果的随机数模拟器。
+    // 在您将其嵌入 C++ / JUCE WebBrowser 时，您的 C++ 后端将主动调用 window.updateLevels(peak, max, rms, rmsMax)。
+    // 所以请务必删除或注释掉这段模拟器代码，否则会导致真实数据与模拟数据交替闪烁！
+    /* --- 请注释或删除开始 --- */
+    if (typeof __JUCE__ === 'undefined') {
+      let mockMax = -96;
+      let mockRmsMax = -96;
+      setInterval(() => {
+        const p = -96 + Math.random() * 98; // 偶尔 clip
+        const r = p - (Math.random() * 10 + 5);
+        if (p > mockMax) mockMax = p;
+        else mockMax -= 0.5; // 模拟慢慢掉落
+        if (mockMax < -96) mockMax = -96;
+        if (r > mockRmsMax) mockRmsMax = r;
+        else mockRmsMax -= 0.5;
+        if (mockRmsMax < -96) mockRmsMax = -96;
+        updateLevels(p, mockMax, r, mockRmsMax);
+      }, 33);
+    }
+    /* --- 请注释或删除结束 --- */
+    // =========================================================================
+  </script>
+  </body>
 </html>

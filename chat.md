@@ -1114,3 +1114,39 @@ __JUCE__.backend.addEventListener('levelData', function(data) {
 | http://local/ + ResourceProvider | DNS 解析假域名失败 |
 | data: URI | WebView2 安全禁用 |
 | evaluateJavascript | DAW 插件中静默失败 |
+
+---
+
+## 📝 Hermes — 当前待解决问题 (2026-07-15 20:30)
+
+### 1. 🔴 WebView 周围黑框（未解决）
+
+**现象**：DAW 插件中 WebView 四周出现黑色边框，遮挡了 UI 的圆角设计。
+
+**已尝试**：
+- `withBackgroundColour(0xff1a1a2e)` — 无效
+- `setOpaque(true)` + `paint()` 填充编辑器背景 — 无效
+- 编辑器透明化 — 无效
+- 延迟显示 WebView（加载完再 show）— 无效
+
+**可能方向**：DAW 宿主窗口层级问题，或 WebView2 的 HWND 子窗口自带边框。
+
+### 2. 🟡 RMS 静音时显示 ~-69dB（部分修复）
+
+**根因**：DAW 暂停/停止时 `processBlock` 不再被调用，RMS 值冻结在上次计算值。
+
+**已修复**：timerCallback 中加静音门限 — peak < -90dB 时强制 RMS = -96。
+
+**待验证**：是否完全解决。
+
+### 3. 🟢 RMS hold 与峰值 hold 对齐
+
+**已完成**：RMS hold 改为与 peak hold 相同的采样计数逻辑（2s 保持 + 衰减）。
+
+### 4. 🟢 HOLD 数值两位小数
+
+**待 Gemini 处理**：JS 端 `.toFixed(1)` → `.toFixed(2)`。
+
+### 5. 🟢 数据格式升级为 4 值
+
+**已完成**：`[peak, peakHold, rms, rmsHold]`。
