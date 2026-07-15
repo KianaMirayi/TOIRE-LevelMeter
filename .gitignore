@@ -38,9 +38,7 @@ $RECYCLE.BIN/
 # Local dev overrides (paths, secrets, preferences)
 *.local
 *.local.*
-WebUI/FOR_GEMINI.md
-
-# Collaboration log (local only, not for repo)
+WebUI/
 chat.md
 
 # Crash dumps
