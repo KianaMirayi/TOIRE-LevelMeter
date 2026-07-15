@@ -39,3 +39,9 @@ $RECYCLE.BIN/
 *.local
 *.local.*
 WebUI/FOR_GEMINI.md
+
+# Collaboration log (local only, not for repo)
+chat.md
+
+# Crash dumps
+*.stackdump

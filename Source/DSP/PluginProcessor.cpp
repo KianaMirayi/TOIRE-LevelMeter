@@ -46,6 +46,10 @@ void TOIRELevelMeterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     juce::ignoreUnused(midiMessages);
     juce::ScopedNoDenormals noDenormals;
 
+    // Increment frame counter so the editor knows processBlock is still being called.
+    // When paused/deactivated/bypassed, this stops and the editor decays the display.
+    ++frameCounter;
+
     const int numSamples = buffer.getNumSamples();
     const int numChannels = buffer.getNumChannels();
 

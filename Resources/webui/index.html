@@ -11,10 +11,8 @@
       background: #0d0e11;
       color: #e0e0e0;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      margin: 0;
+      padding: 0;
       height: 100vh;
       overflow: hidden;
       user-select: none;
@@ -23,8 +21,9 @@
     
     /* 拟物化主面板 */
     .plugin-panel {
-      width: 92%;
-      max-width: 500px;
+      width: 100%;
+      height: 100%;
+      max-width: none;
       background: 
         /* 金属划痕模拟 (加粗约 2px，分布到界面边缘) */
         linear-gradient(15deg, transparent calc(50% - 1px), rgba(255,255,255,0.03) calc(50% - 0.5px), rgba(255,255,255,0.03) calc(50% + 1.5px), transparent calc(50% + 2px)) 2% 15% / 120px 120px no-repeat,
@@ -60,15 +59,17 @@
         /* 光影基础层 */
         linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 2%, rgba(0,0,0,0) 98%, rgba(0,0,0,0.6) 100%),
         radial-gradient(140% 120% at 50% 0%, #34373e 0%, #1f2127 40%, #15161b 100%);
-      border-radius: 24px;
-      padding: 40px 36px;
+      border-radius: 0;
+      padding: 5vh 5vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
       box-shadow: 
-        0 40px 80px rgba(0,0,0,0.95),
-        0 15px 30px rgba(0,0,0,0.7),
         inset 0 2px 3px rgba(255,255,255,0.15),
         inset 0 -2px 6px rgba(0,0,0,0.8),
         inset 0 0 0 1px rgba(255,255,255,0.04);
-      border: 1px solid #060708;
+      border: none;
       position: relative;
     }
     
@@ -77,10 +78,10 @@
       text-align: center;
       font-family: "Lucida Calligraphy", "Monotype Corsiva", "Apple Chancery", "Snell Roundhand", "Georgia", cursive, serif;
       font-style: italic;
-      font-size: 24px;
+      font-size: clamp(18px, 5vh, 24px);
       font-weight: 600;
       letter-spacing: 4px;
-      margin-bottom: 40px;
+      margin-bottom: clamp(10px, 4vh, 40px);
       
       /* 淡色系丰富渐变 */
       background: linear-gradient(90deg, #ffd1ff 0%, #fae0c1 33%, #c2e9fb 66%, #d4ffea 100%);
@@ -163,7 +164,7 @@
     /* 仪表轨道 (深槽阴影) */
     .meter-track {
       container-type: inline-size;
-      height: 40px;
+      height: clamp(30px, 8vh, 40px);
       background: #030405;
       border-radius: 20px;
       position: relative;
@@ -330,7 +331,7 @@
     .footer-row {
       display: flex;
       justify-content: center;
-      margin-top: 20px;
+      margin-top: clamp(10px, 4vh, 20px);
     }
     
     /* 拟物化指示器灯 (CLIP) */

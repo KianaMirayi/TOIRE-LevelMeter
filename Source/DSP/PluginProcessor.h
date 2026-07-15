@@ -1,7 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
 #include "LevelMeter/MeterComponent.h"
-#include "../Bridge/WebViewBridge.h"
 
 class TOIRELevelMeterAudioProcessor : public juce::AudioProcessor
 {
@@ -31,13 +30,16 @@ public:
     const juce::String getProgramName(int) override { return {}; }
     void changeProgramName(int, const juce::String&) override {}
 
-    // Public access for the editor / WebView bridge
+    // Public access for the editor
     LevelMeterData& getMeterData() { return meterData; }
-    WebViewBridge&  getBridge()   { return bridge; }
+
+    // Frame counter: incremented every processBlock call.
+    // Editor reads this to detect pause/bypass/deactivate (counter stops -> decay).
+    std::atomic<uint64_t> frameCounter{0};
+    uint64_t getFrameCount() const { return frameCounter.load(); }
 
 private:
     LevelMeterData meterData;
-    WebViewBridge  bridge;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TOIRELevelMeterAudioProcessor)
 };

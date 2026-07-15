@@ -10,7 +10,7 @@
 //   data[2] = RMS (dB)
 //   data[3] = RMS hold (dB)
 //
-// Anti-black-border: WebView hidden for first ~1s (方案二), bg colour set (方案一)
+// Anti-black-border: WebView shown immediately, bg colour matched across paint() / WebView2 / HTML
 
 class TOIRELevelMeterAudioProcessorEditor
     : public juce::AudioProcessorEditor
@@ -21,6 +21,7 @@ public:
     ~TOIRELevelMeterAudioProcessorEditor() override;
 
     void resized() override;
+    void paint(juce::Graphics& g) override;
 
 private:
     void timerCallback() override;
@@ -32,11 +33,14 @@ private:
     float displayRmsDb      = -96.0f;
     float displayRmsHoldDb  = -96.0f;
 
-    std::unique_ptr<juce::WebBrowserComponent> webView;
+    // Frame-count detection for pause/bypass/deactivate
+    uint64_t lastFrameCount = 0;
 
-    // 方案二：延迟显示 WebView
-    int  loadDelayFrames = 0;
-    bool webViewShown    = false;
+    // Pre-allocated to avoid heap allocation every tick @ 30Hz
+    juce::Array<juce::var> payloadBuffer;
+    juce::Path             clipPath;
+
+    std::unique_ptr<juce::WebBrowserComponent> webView;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TOIRELevelMeterAudioProcessorEditor)
 };
