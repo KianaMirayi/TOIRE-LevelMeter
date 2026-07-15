@@ -1,6 +1,6 @@
 # TOIRE-LevelMeter
 
-JUCE 8 C++ 音频电平表插件（VST3 / Standalone）。WebView2 驱动赛博朋克风格 UI。
+JUCE 8 C++ 音频电平表插件（VST3 / Standalone）。WebView2 驱动UI。
 
 ## 功能
 
