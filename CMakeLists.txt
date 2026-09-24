@@ -13,7 +13,7 @@ juce_add_plugin(TOIRELevelMeter
     PLUGIN_CODE Lvm1
     FORMATS VST3 Standalone
     PRODUCT_NAME "TOIRE Level Meter"
-    VERSION 1.0.0
+    VERSION 1.0.1
     COPY_PLUGIN_AFTER_BUILD TRUE)
 
 juce_generate_juce_header(TOIRELevelMeter)

@@ -43,3 +43,7 @@ chat.md
 
 # Crash dumps
 *.stackdump
+
+# Installer output and fetched dependencies
+dist/
+installer/deps/
