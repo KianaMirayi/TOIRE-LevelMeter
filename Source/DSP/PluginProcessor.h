@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "LevelMeter/MeterComponent.h"
+#include "WebViewPrewarm.h"
 
 class TOIRELevelMeterAudioProcessor : public juce::AudioProcessor
 {
@@ -33,12 +34,13 @@ public:
     // Public access for the editor
     LevelMeterData& getMeterData() { return meterData; }
 
-    // Frame counter: incremented every processBlock call.
-    // Editor reads this to detect pause/bypass/deactivate (counter stops -> decay).
+    // Incremented every processBlock; the editor reads it to detect pause/bypass/deactivate.
     std::atomic<uint64_t> frameCounter{0};
     uint64_t getFrameCount() const { return frameCounter.load(); }
 
 private:
+    WebViewPrewarm prewarm;   // declared first so it is destroyed last; its constructor only starts a thread
+
     LevelMeterData meterData;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TOIRELevelMeterAudioProcessor)

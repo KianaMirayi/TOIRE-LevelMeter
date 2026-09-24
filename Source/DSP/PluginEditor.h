@@ -3,14 +3,28 @@
 #include "PluginProcessor.h"
 
 // ====== PluginEditor (WebView-based UI) ======
-//
-// Data format: C++ → JS via emitEventIfBrowserIsVisible("levelData", [peak, peakHold, rms, rmsHold])
-//   data[0] = instantaneous peak (dB)
-//   data[1] = peak hold (dB)
-//   data[2] = RMS (dB)
-//   data[3] = RMS hold (dB)
-//
-// Anti-black-border: WebView shown immediately, bg colour matched across paint() / WebView2 / HTML
+// C++ -> JS: emitEventIfBrowserIsVisible("levelData", [peak, peakHold, rms, rmsHold]), all in dB.
+// The WebView is built in the constructor so WebView2 startup overlaps the host showing the window.
+// It stays 1x1 until the page reports itself composited, so its HWND cannot cover the placeholder.
+// DarkWebBrowserComponent replaces JUCE's hard-coded white fallback paint with the Web UI colour.
+
+// WebBrowserComponent that paints the Web UI background instead of JUCE's white, and tracks navigation.
+class DarkWebBrowserComponent : public juce::WebBrowserComponent
+{
+public:
+    explicit DarkWebBrowserComponent (const juce::WebBrowserComponent::Options& options);
+
+    void paint (juce::Graphics& g) override;
+    void pageFinishedLoading (const juce::String& url) override;
+
+    // True once navigation completed; a fallback reveal trigger, not proof of visibility.
+    bool hasNavigated() const noexcept { return navigated; }
+
+private:
+    bool navigated = false;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DarkWebBrowserComponent)
+};
 
 class TOIRELevelMeterAudioProcessorEditor
     : public juce::AudioProcessorEditor
@@ -26,6 +40,8 @@ public:
 private:
     void timerCallback() override;
 
+    void createWebView();
+
     TOIRELevelMeterAudioProcessor& audioProcessor;
 
     float displayPeakDb     = -96.0f;
@@ -33,14 +49,18 @@ private:
     float displayRmsDb      = -96.0f;
     float displayRmsHoldDb  = -96.0f;
 
-    // Frame-count detection for pause/bypass/deactivate
-    uint64_t lastFrameCount = 0;
+    uint64_t lastFrameCount = 0;                 // detects pause / bypass / deactivate
+    juce::Array<juce::var> payloadBuffer;        // pre-allocated to avoid per-tick heap use
 
-    // Pre-allocated to avoid heap allocation every tick @ 30Hz
-    juce::Array<juce::var> payloadBuffer;
-    juce::Path             clipPath;
+    std::atomic<bool> pageReadyFlag { false };   // declared before webView: its Options lambda captures `this`
 
-    std::unique_ptr<juce::WebBrowserComponent> webView;
+    std::unique_ptr<DarkWebBrowserComponent> webView;
+
+    bool  webViewRevealed  = false;              // has the WebView been grown to full size
+    int   ticksSinceCreate = 0;
+    int   ticksSinceNav    = 0;
+    float loadingPhase     = 0.0f;               // drives the placeholder dots
+    bool  nudgedWebView    = false;              // one-shot safety net that forces controller creation
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TOIRELevelMeterAudioProcessorEditor)
 };

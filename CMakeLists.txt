@@ -21,6 +21,7 @@ juce_generate_juce_header(TOIRELevelMeter)
 target_sources(TOIRELevelMeter PRIVATE
     Source/DSP/PluginProcessor.cpp
     Source/DSP/PluginEditor.cpp
+    Source/DSP/WebViewPrewarm.cpp
     Source/DSP/LevelMeter/MeterComponent.cpp)
 
 target_include_directories(TOIRELevelMeter PRIVATE
